@@ -1,7 +1,0 @@
-a frequency = 12
-n frequency = 3
-l frequency = 2
-k frequency = 2
-p frequency = 1
-PARENT PROCESS READING...
-CHILD PROCESS READING...

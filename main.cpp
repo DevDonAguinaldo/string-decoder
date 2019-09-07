@@ -12,47 +12,126 @@
 
 using namespace std;
 
+int counter(string, char); // Counter Prototype
+bool existsInStack(stack<char>, char); // Stack Checker
+void findChars(stack<char>&, string); // Character Finder Prototype
+void addToFreq(stack<char>, vector<pair<char, int>>&, string); // Frequency Array Loader
+void sortFreqDescending(vector<pair<char, int>>&); // Sort Frequencies Accordingly
+
 int main(int argc, char const *argv[]) {
-   FILE * file;
    string line; cin >> line; // input string
    pid_t pid; // process IDs
-   pid = fork(); // initialized the forked processes
 
    stack<char> myStack; // stack of characters to look for
    vector<pair<char, int>> arrOfFreq; // associative vector of frequencies
 
-   // TODO: find a way to pass information from parent to child and vice-versa.
-   // ? Use output text files?
-   // ? How does child/parent know what text file?
-   if(pid != 0) {
-      // parent process 1
-      findChars(myStack, line);
-      addToFreq(myStack, arrOfFreq, line);
-      sortFreqDescending(arrOfFreq);
+   // Child Processes
+   // *Must exit so it does not create forks in child processes.
+   for(int i = 0; i < arrOfFreq.size(); i++) {
+      if((pid = fork()) == 0) {
 
-      file = fopen("output.txt", "w");
-      for(auto key : arrOfFreq)
-         fprintf(file, "%c frequency = %d\n", key.first, key.second);
-      fclose(file);
-   } else {
-      // child process 1
-      wait(NULL);
-      
-      pid = fork(); // initializes another parent and child fork
-      if(pid != 0) {
-         // parent process 2
-         file = fopen("output.txt", "a");
-         fprintf(file, "PARENT PROCESS READING...\n");
-         fclose(file);
-      } else {
-         // child process 2
-         wait(NULL);
-         file = fopen("output.txt", "a");
-         fprintf(file, "CHILD PROCESS READING...\n");
-         fclose(file);
+         _exit(0);
       }
    }
 
+   // Parent Processes
+   // *Must wait for each child process to finish.
+   for(int i = 0; i < arrOfFreq.size(); i++) {
+      wait(0);
+   }
+
    return 0;
+} // end main
+
+/* 
+* Counter Function
+* -----------------
+* Parameters:
+* Input String
+* Character to Find
+* -----------------
+* Returns: The Frequency of Character
+*/
+int counter(string line, char findMe) {
+   int count = 0; // temp variable to store count of character
+   
+   for(int i = 0; i < line.length(); i++) {
+      if(line[i] == findMe)
+         count++;
+   } // end loop
+
+   return count;
+} // end function
+
+/*
+* Character Finder Function
+* -------------------------
+* Parameters:
+* Character Stack
+* Input String
+* -------------------------
+* Returns: Stack of Characters
+*/
+void findChars(stack<char>& stk, string line) {
+   // loop through string to find characters
+   for(int i = 0; i < line.length(); i++) {
+      // if doesn't exist then push
+      if(existsInStack(stk, line[i]) == false) {
+         stk.push(line[i]);
+      } else // if does then continue
+         continue;
+   } // end loop
+} // end function
+
+/*
+* Stack Checker Function
+* ----------------------
+* Parameters:
+* Character Stack
+* Character to Find
+* ----------------------
+* Returns: Boolean
+*/
+bool existsInStack(stack<char> stk, char findMe) {
+   while(!stk.empty()) {
+      if(stk.top() == findMe)
+         return true;
+      else
+         stk.pop();
+   } // end loop
+
+   if(stk.empty())
+      return false;
+} // end function
+
+/*
+* Add To Frequency Array Function
+* -------------------------------
+* Parameters:
+* Stack of Characters
+* Associative Array of Frequecies
+* -------------------------------
+* Returns: Array of Frequencies
+*/
+void addToFreq(stack<char> stk, vector<pair<char, int>>& freq, string line) {
+   while(!stk.empty()) {
+      // count the frequencies and push to array
+      freq.push_back(pair<char, int> (stk.top(), counter(line, stk.top())));
+      stk.pop();
+   }
 }
 
+/*
+* Sort Frequency Array Function
+* -------------------------------
+* Parameters:
+* Associative Vector of Frequencies
+* -------------------------------
+* Returns: Array of Frequencies in Descending Order
+*/
+void sortFreqDescending(vector<pair<char, int>>& freq) {
+   sort(freq.begin(), freq.end(), 
+      [](pair<char, int> elem1, pair<char, int> elem2) {
+         return elem1.second > elem2.second;
+      });
+} // end function
