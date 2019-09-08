@@ -6,7 +6,7 @@ A C++ application to learn how processes and threads work.
 > g++ std=c++11 main.cpp -o main
 
 2. Run using command:
-> ./main < <filename>.txt
+> ./main < _filename_.txt
 
-- [x] Solved without using pipes. Uses files to store data.
-- [ ] Solve using pipes.
+- [x] Solved without using pipes.
+- [ ] Solved using pipes.
