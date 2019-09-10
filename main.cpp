@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <stdio.h>
 #include <unistd.h>
@@ -15,10 +16,12 @@ int counter(string, char); // Counter Prototype
 bool existsInStack(stack<char>, char); // Stack Checker
 void findChars(stack<char>&, string); // Character Finder Prototype
 void addToFreq(stack<char>, vector<pair<char, int>>&, string); // Frequency Array Loader
-void getCharStack(vector<pair<char, int>>, stack<char>&); // gets the order of characters
 void sortFreqDescending(vector<pair<char, int>>&); // Sort Frequencies Accordingly
+void deStack(stack<char>&); // Deconstructs Stack
 
 int main(int argc, char const *argv[]) {
+   time_t start, end;
+   time(&start); ios_base::sync_with_stdio(false);
    string line;
    getline(cin, line);
    ifstream input_file;
@@ -31,32 +34,26 @@ int main(int argc, char const *argv[]) {
    findChars(myStack, line);
    addToFreq(myStack, arrOfFreq, line);
    sortFreqDescending(arrOfFreq);
-   getCharStack(arrOfFreq, charStack);
-
-   int numOfChars = charStack.size();
 
    // *Child Processes
    // *Must exit so it does not create forks in child processes.
-   for(int i = 0; i < numOfChars; i++) {
+   for(int i = 0; i < arrOfFreq.size(); i++) {
       if((pid = fork()) == 0) {
-         string filename(1, charStack.top());
+         string filename(1, arrOfFreq[i].first);
          string binary;
 
          // removes the characters
-         for(int n = 0; n < line.length(); n++) {
-            for(int k = 0; k < i; k++) {
+         for(int n = 0; n < line.length(); n++)
+            for(int k = 0; k < i; k++)
                if(line[n] == arrOfFreq[k].first)
                   line[n] = ' ';
-            }
-         }
 
          line.erase(remove(line.begin(), line.end(), ' '), line.end());
 
          // create binary code
-         for(int j = 0; j < line.length(); j++) {
-            if(line[j] == charStack.top()) binary += "1";
+         for(int j = 0; j < line.length(); j++)
+            if(line[j] == arrOfFreq[i].first) binary += "1";
             else binary += "0";
-         }
 
          // output to designated text file
          output_file.open(filename + ".txt");
@@ -66,7 +63,6 @@ int main(int argc, char const *argv[]) {
 
          _exit(0);
       }
-      charStack.pop();
    }
 
    // *Parent Processes
@@ -74,24 +70,33 @@ int main(int argc, char const *argv[]) {
    for(int j = 0; j < arrOfFreq.size(); j++)
       printf("%c frequency %d\n", arrOfFreq[j].first, arrOfFreq[j].second);
 
-   for(int i = 0; i < numOfChars; i++) {
-      wait(0);
+   for(int i = 0; i < arrOfFreq.size(); i++) {
+      wait(0); // waits for child processes to finish
 
       string data_string, data_binary;
       string filename(1, arrOfFreq[i].first);
 
+      // opens the appropriate files
       input_file.open(filename + ".txt");
       getline(input_file, data_string);
       getline(input_file, data_binary);
       input_file.close();
 
-      if(i == 0)
-         cout << "Original Message:\t" << data_string << endl;
-      else 
-         cout << "Remaining Message:\t" << data_string << endl;
-
+      // output data received
+      if(i == 0) cout << "Original Message:\t" << data_string << endl;
+      else cout << "Remaining Message:\t" << data_string << endl;
       cout << "Symbol " << arrOfFreq[i].first << " code:\t\t" << data_binary << endl;
    }
+
+   // deconstruct
+   deStack(myStack);
+   deStack(charStack);
+   arrOfFreq.clear();
+
+   time(&end);
+
+   double exec_time = double(end - start);
+   cout << "\nExecution Time: " << fixed << exec_time << 's' << setprecision(5) << endl;
 
    return 0;
 } // end main
@@ -155,6 +160,8 @@ bool existsInStack(stack<char> stk, char findMe) {
 
    if(stk.empty())
       return false;
+   else
+      return true;
 } // end function
 
 /*
@@ -194,24 +201,9 @@ void sortFreqDescending(vector<pair<char, int>>& freq) {
 } // end function
 
 /*
-* Get Character Stack Order Function
-* -------------------------------
-* Parameters:
-* Initial Stack
-* Final Stack
-* -------------------------------
-* Returns: Reversed Stack of Initial Stack
+* Deconstruct Stack
 */
-void getCharStack(vector<pair<char, int>> v, stack<char>& stk) {
-   stack<char> tempStk;
-   
-   // get the initial stack
-   for(int i = 0; i < v.size(); i++)
-      tempStk.push(v[i].first);
-
-   // reverse the stack for correct order
-   while(!tempStk.empty()) {
-      stk.push(tempStk.top());
-      tempStk.pop();
-   }
+void deStack(stack<char>& stk) {
+   while(!stk.empty())
+      stk.pop();
 }
