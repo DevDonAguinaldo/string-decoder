@@ -1,0 +1,258 @@
+TEST 1
+Your output is incorrect.
+Your program tested with:
+--------------------------------
+aaaannnaaakkllaaaaap
+--------------------------------
+Your output:
+--------------------------------
+a frequency 12
+n frequency 3
+k frequency 2
+l frequency 2
+p frequency 1
+Original Message:
+Symbol a code:
+Remaining Message:
+Symbol n code:
+Remaining Message: kkllp
+Symbol k code: 11000
+Remaining Message: llp
+Symbol l code: 110
+Remaining Message: p
+Symbol p code: 1
+--------------------------------
+Expected output:
+--------------------------------
+a frequency = 12
+n frequency = 3
+k frequency = 2
+l frequency = 2
+p frequency = 1
+Original Message: aaaannnaaakkllaaaaap
+Symbol a code: 11110001110000111110
+Remaining Message: nnnkkllp
+Symbol n code: 11100000
+Remaining Message: kkllp
+Symbol k code: 11000
+Remaining Message: llp
+Symbol l code: 110
+Remaining Message: p
+Symbol p code: 1
+--------------------------------
+TEST 2
+Your output is incorrect.
+Your program tested with:
+--------------------------------
+UNIVERSITY OF HOUSTON
+DEPARTMENT OF COMPUTER SCIENCE
+--------------------------------
+Your output:
+--------------------------------
+O frequency 3
+frequency 2
+I frequency 2
+N frequency 2
+S frequency 2
+T frequency 2
+U frequency 2
+E frequency 1
+F frequency 1
+H frequency 1
+R frequency 1
+V frequency 1
+Y frequency 1
+Original Message:
+Symbol O code:
+Remaining Message:
+Symbol code:
+Remaining Message:
+Symbol I code:
+Remaining Message:
+Symbol N code:
+Remaining Message: UVERSTYFHUST
+Symbol S code: 000010000010
+Remaining Message: UVERTYFHUT
+Symbol T code: 0000100001
+Remaining Message: UVERYFHU
+Symbol U code: 10000001
+Remaining Message: VERYFH
+Symbol E code: 010000
+Remaining Message: VRYFH
+Symbol F code: 00010
+Remaining Message: VRYH
+Symbol H code: 0001
+Remaining Message: VRY
+Symbol R code: 010
+Remaining Message: VY
+Symbol V code: 10
+Remaining Message: Y
+Symbol Y code: 1
+--------------------------------
+Expected output:
+--------------------------------
+E frequency = 6
+frequency = 5
+O frequency = 5
+T frequency = 5
+N frequency = 4
+C frequency = 3
+I frequency = 3
+R frequency = 3
+S frequency = 3
+U frequency = 3
+F frequency = 2
+M frequency = 2
+P frequency = 2
+<EOL> frequency = 1
+A frequency = 1
+D frequency = 1
+H frequency = 1
+V frequency = 1
+Y frequency = 1
+Original Message: UNIVERSITY OF HOUSTON<EOL>DEPARTMENT OF COMPUTER SCIENCE
+Symbol E code: 0000100000000000000000010000010000000000001000001001
+Remaining Message: UNIVRSITY OF HOUSTON<EOL>DPARTMNT OF COMPUTR SCINC
+Symbol code: 0000000001001000000000000000010010000000100000
+Remaining Message: UNIVRSITYOFHOUSTON<EOL>DPARTMNTOFCOMPUTRSCINC
+Symbol O code: 00000000010010001000000000010010000000000
+Remaining Message: UNIVRSITYFHUSTN<EOL>DPARTMNTFCMPUTRSCINC
+Symbol T code: 000000010000010000001001000001000000
+Remaining Message: UNIVRSIYFHUSN<EOL>DPARMNFCMPURSCINC
+Symbol N code: 0100000000001000000100000000010
+Remaining Message: UIVRSIYFHUS<EOL>DPARMFCMPURSCIC
+Symbol C code: 000000000000000000100000101
+Remaining Message: UIVRSIYFHUS<EOL>DPARMFMPURSI
+Symbol I code: 010001000000000000000001
+Remaining Message: UVRSYFHUS<EOL>DPARMFMPURS
+Symbol R code: 001000000000010000010
+Remaining Message: UVSYFHUS<EOL>DPAMFMPUS
+Symbol S code: 001000010000000001
+Remaining Message: UVYFHU<EOL>DPAMFMPU
+Symbol U code: 100001000000001
+Remaining Message: VYFH<EOL>DPAMFMP
+Symbol F code: 001000000100
+Remaining Message: VYH<EOL>DPAMMP
+Symbol M code: 0000000110
+Remaining Message: VYH<EOL>DPAP
+Symbol P code: 00000101
+Remaining Message: VYH<EOL>DA
+Symbol <EOL> code: 000100
+Remaining Message: VYHDA
+Symbol A code: 00001
+Remaining Message: VYHD
+Symbol D code: 0001
+Remaining Message: VYH
+Symbol H code: 001
+Remaining Message: VY
+Symbol V code: 10
+Remaining Message: Y
+Symbol Y code: 1
+--------------------------------
+TEST 3
+Your output is incorrect.
+Your program tested with:
+--------------------------------
+MMMM
+EEEE
+CCCC
+AAAA
+
+--------------------------------
+Your output:
+--------------------------------
+M frequency 4
+Original Message: MMMM
+Symbol M code: 1111
+--------------------------------
+Expected output:
+--------------------------------
+<EOL> frequency = 4
+A frequency = 4
+C frequency = 4
+E frequency = 4
+M frequency = 4
+Original Message: MMMM<EOL>EEEE<EOL>CCCC<EOL>AAAA<EOL>
+Symbol <EOL> code: 00001000010000100001
+Remaining Message: MMMMEEEECCCCAAAA
+Symbol A code: 0000000000001111
+Remaining Message: MMMMEEEECCCC
+Symbol C code: 000000001111
+Remaining Message: MMMMEEEE
+Symbol E code: 00001111
+Remaining Message: MMMM
+Symbol M code: 1111
+--------------------------------
+TEST 4
+Your output is incorrect.
+Your program tested with:
+--------------------------------
+COSC 1306
+COSC 1430
+COSC 3360
+
+--------------------------------
+Your output:
+--------------------------------
+C frequency 2
+frequency 1
+0 frequency 1
+1 frequency 1
+3 frequency 1
+6 frequency 1
+O frequency 1
+S frequency 1
+Original Message:
+Symbol C code:
+Remaining Message: UNIVERSITYFHUSTN
+Symbol code: 0000000000000000
+Remaining Message:
+Symbol 0 code:
+Remaining Message:
+Symbol 1 code:
+Remaining Message: OS36
+Symbol 3 code: 0010
+Remaining Message: OS6
+Symbol 6 code: 001
+Remaining Message: OS
+Symbol O code: 10
+Remaining Message: S
+Symbol S code: 1
+--------------------------------
+Expected output:
+--------------------------------
+C frequency = 6
+3 frequency = 4
+<EOL> frequency = 3
+frequency = 3
+0 frequency = 3
+O frequency = 3
+S frequency = 3
+1 frequency = 2
+6 frequency = 2
+4 frequency = 1
+Original Message: COSC 1306<EOL>COSC 1430<EOL>COSC 3360<EOL>
+Symbol C code: 100100000010010000001001000000
+Remaining Message: OS 1306<EOL>OS 1430<EOL>OS 3360<EOL>
+Symbol 3 code: 000010000000010000011000
+Remaining Message: OS 106<EOL>OS 140<EOL>OS 60<EOL>
+Symbol <EOL> code: 00000010000001000001
+Remaining Message: OS 106OS 140OS 60
+Symbol code: 00100000100000100
+Remaining Message: OS106OS140OS60
+Symbol 0 code: 00010000010001
+Remaining Message: OS16OS14OS6
+Symbol O code: 10001000100
+Remaining Message: S16S14S6
+Symbol S code: 10010010
+Remaining Message: 16146
+Symbol 1 code: 10100
+Remaining Message: 646
+Symbol 6 code: 101
+Remaining Message: 4
+Symbol 4 code: 1
+--------------------------------
+PROPOSED GRADE
+--------------------------------
+0
+--------------------------------

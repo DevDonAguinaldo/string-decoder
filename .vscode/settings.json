@@ -1,6 +1,13 @@
 {
+<<<<<<< HEAD
    "files.associations": {
       "ostream": "cpp",
       "iomanip": "cpp"
    }
+=======
+  "files.associations": {
+    "string": "cpp",
+    "iostream": "cpp"
+  }
+>>>>>>> Refactored code.
 }
