@@ -61,7 +61,7 @@ int main(int argc, char const *argv[]) {
   string data_binary;
 
   for(int i = 0; i < frequencies.size(); i++) {
-    input_file.open(getFilename(frequencies[i].first) + ".txt");
+    input_file.open(getFilename(frequencies[i].first));
 
     getline(input_file, data_string);
     getline(input_file, data_binary);
@@ -176,7 +176,7 @@ string binary(vector<char> txt, char c) {
 }
 
 void outputString(ofstream& ofile, vector<char> txt, string fn, string binary) {
-  ofile.open(fn + ".txt");
+  ofile.open(fn);
 
   for(int i = 0; i < txt.size(); i++) {
     if(txt[i] == '\n') {
@@ -193,10 +193,11 @@ void outputString(ofstream& ofile, vector<char> txt, string fn, string binary) {
 
 string getFilename(char c) {
   if(c == '\n') {
-    string s = "EOL";
+    string s = "EOL.txt";
     return s;
   } else {
     string s(1, c);
+    s += ".txt";
     return s;
   }
 }
