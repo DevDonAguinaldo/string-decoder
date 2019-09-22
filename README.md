@@ -9,4 +9,9 @@ A C++ application to learn how processes and threads work.
 > ./main < _filename_.txt
 
 - [x] Solved without using pipes.
-- [ ] Solved using pipes.
+- [x] Checks for EOL special character.
+- [x] Counts blank spaces.
+- [x] Uses fork() and processes correctly.
+- [x] Sorts by ASCII values.
+- [x] Follows format.
+- [x] Parent process waits and outputs.
