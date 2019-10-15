@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
+#include <ctype.h>
 
 void error(char *msg) {
   perror(msg);
@@ -34,8 +35,8 @@ int main(int argc, char *argv[]) {
   server = gethostbyname(argv[1]);
   
   if (server == NULL) {
-      fprintf(stderr,"ERROR, no such host\n");
-      exit(0);
+    fprintf(stderr, "ERROR, no such host\n");
+    exit(0);
   }
 
   bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -48,20 +49,32 @@ int main(int argc, char *argv[]) {
   if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
     error("ERROR connecting");
   
-  bzero(buffer, 256);
-  fgets(buffer, 255, stdin);
-  n = write(sockfd, buffer, strlen(buffer));
-  
-  if (n < 0) 
-    error("ERROR writing to socket");
-  
-  bzero(buffer, 256);
-  n = read(sockfd, buffer, 255);
-  
-  if (n < 0) 
-    error("ERROR reading from socket");
-  
-  printf("%s\n",buffer);
-  
+  FILE *f;
+
+  int words = 0;
+  char c;
+
+  f = fopen("input.txt", "r");
+
+  while((c = getc(f)) != EOF) {
+    fscanf(f, "%s", buffer);
+    if(isspace(c) || c == '\t')
+      words++;
+  }
+
+  write(sockfd, &words, sizeof(int));
+  rewind(f);
+
+  char ch;
+
+  while(ch != EOF) {
+    fscanf(f, "%s", buffer);
+    write(sockfd, buffer, 512);
+    ch = fgetc(f);
+  }
+
+  printf("Successfully sent!\n");
+
+  close(sockfd);
   return 0;
 }

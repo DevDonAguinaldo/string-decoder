@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
+#include <ctype.h>
 
 void error(char *msg) {
   perror(msg);
@@ -14,16 +15,15 @@ void error(char *msg) {
 }
 
 int main(int argc, char *argv[]) {
-  int sockfd, newsockfd, portno, clilen;
-  char buffer[256];
-  struct sockaddr_in serv_addr, cli_addr;
-  int n;
-  pid_t pid;
-
   if (argc < 2) {
     fprintf(stderr,"ERROR, no port provided\n");
     exit(1);
   }
+
+  int sockfd, newsockfd, portno, n;
+  char buffer[256];
+  struct sockaddr_in serv_addr, cli_addr;
+  socklen_t clilen;
 
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -44,24 +44,32 @@ int main(int argc, char *argv[]) {
 
   clilen = sizeof(cli_addr);
 
-  newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t *)&clilen);
+  newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
 
-  if (newsockfd < 0) 
+  if (newsockfd < 0)
     error("ERROR on accept");
 
-  bzero(buffer, 256);
-  n = read(newsockfd, buffer, 255);
+  FILE *fp;
 
-  if (n < 0)
-    error("ERROR reading from socket");
-  
-  // START EDITING CODE HERE
-  char* response;
+  int ch = 0;
+  fp = fopen("input_rec.txt", "w");
+  int words;
 
-  // END EDITING CODE HERE
+  read(newsockfd, &words, sizeof(int));
 
-  if (n < 0)
-    error("ERROR writing to socket");
-  
+  printf("Passed integer: %d\n", words);
+
+  while(ch != words) {
+    read(newsockfd, buffer, 255);
+    fprintf(fp, "%s", buffer);
+    printf("%s %d\n", buffer, ch);
+    ch++;
+  }
+
+  printf("Received successfully! Saved as: input_rec.txt\n");
+
+  close(newsockfd);
+  close(sockfd);
+
   return 0; 
 }
