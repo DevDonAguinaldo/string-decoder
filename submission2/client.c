@@ -49,31 +49,7 @@ int main(int argc, char *argv[]) {
   if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
     error("ERROR connecting");
   
-  FILE *f;
-
-  int words = 0;
-  char c;
-
-  f = fopen("input.txt", "r");
-
-  while((c = getc(f)) != EOF) {
-    fscanf(f, "%s", buffer);
-    if(isspace(c) || c == '\t')
-      words++;
-  }
-
-  write(sockfd, &words, sizeof(int));
-  rewind(f);
-
-  char ch;
-
-  while(ch != EOF) {
-    fscanf(f, "%s", buffer);
-    write(sockfd, buffer, 512);
-    ch = fgetc(f);
-  }
-
-  printf("Successfully sent!\n");
+  
 
   close(sockfd);
   return 0;

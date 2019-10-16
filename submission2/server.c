@@ -49,24 +49,7 @@ int main(int argc, char *argv[]) {
   if (newsockfd < 0)
     error("ERROR on accept");
 
-  FILE *fp;
-
-  int ch = 0;
-  fp = fopen("input_rec.txt", "w");
-  int words;
-
-  read(newsockfd, &words, sizeof(int));
-
-  printf("Passed integer: %d\n", words);
-
-  while(ch != words) {
-    read(newsockfd, buffer, 255);
-    fprintf(fp, "%s", buffer);
-    printf("%s %d\n", buffer, ch);
-    ch++;
-  }
-
-  printf("Received successfully! Saved as: input_rec.txt\n");
+  
 
   close(newsockfd);
   close(sockfd);
