@@ -1,13 +1,18 @@
 #include <iostream>
 #include <iomanip>
-#include <fstream>
-#include <stdio.h>
 #include <unistd.h>
-#include <string>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h> 
 #include <stack>
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <pthread.h>
 #include <sys/wait.h>
 
 using namespace std;
@@ -21,64 +26,83 @@ void sortFreq(vector<pair<char, int>>&);
 void printString(vector<char>);
 void printFreq(vector<pair<char,int>>);
 void outputString(ofstream&, vector<char>, string, string);
-string getFilename(char);
-string binary(vector<char>, char);
+void *connectToServer(void*);
 
-int main(int argc, char const *argv[]) {
-  ifstream input_file;
-  ofstream output_file;
+int main(int argc, char *argv[]) {
+  int sockfd, portno, n, num_of_threads;
 
-  pid_t pid;
-  
+  struct sockaddr_in serv_addr;
+  struct hostent *server;
+
+  char buffer[256];
+
   vector<char> input_txt;
   stack<char> char_stack; 
   vector<pair<char, int>> frequencies;
   
+  if (argc < 3) {
+    fprintf(stderr, "usage %s hostname port\n", argv[0]);
+    exit(0);
+  }
+
   getString(input_txt);
   getChars(input_txt, char_stack);
   getFreq(frequencies, input_txt, char_stack);
   sortFreq(frequencies);
+  cout << "Sending these to server: \n";
   printFreq(frequencies);
 
-  for(int i = 0; i < frequencies.size(); i++) {
-    if((pid = fork()) == 0) {
-      for(int j = 0; j < input_txt.size(); j++) {
-        for(int k = 0; k < i; k++) {
-          input_txt.erase(remove(input_txt.begin(), input_txt.end(), frequencies[k].first), input_txt.end());
-        }
-      }
+  portno = atoi(argv[2]);
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  num_of_threads = frequencies.size();
+  pthread_t tid[num_of_threads];
 
-      outputString(output_file, input_txt, getFilename(frequencies[i].first), binary(input_txt, frequencies[i].first));
+  if (sockfd < 0) 
+    cerr << "Error - Opening socket." << endl;
+  
+  server = gethostbyname(argv[1]);
+  
+  if (server == NULL) {
+    cerr << "Error - IP/Port does not exist." << endl;
+    exit(0);
+  }
 
-      _exit(0);
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  bcopy((char *)server->h_addr, (char *) &serv_addr.sin_addr.s_addr, server->h_length);
+  serv_addr.sin_port = htons(portno);
+  
+  // printf("Please enter the message: ");
+
+  for(int i = 0; i < num_of_threads; i++) {
+    if(pthread_create(&tid[i], NULL, connectToServer, &frequencies[i].first)) {
+      cerr << "Error - Creating thread." << endl;
+      return 1;
     }
+    
+    if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+      cerr << "Error - Connecting to server." << endl;
+
+    bzero(buffer, 256);
+    buffer[0] = frequencies[i].first;
+    n = write(sockfd, buffer, strlen(buffer));
+    
+    if (n < 0)
+      cerr << "Error - Writing to socket." << endl;
+    
+    bzero(buffer, 256);
+    n = read(sockfd, buffer, 255);
+    
+    if (n < 0)
+      cerr << "Error - Reading from socket." << endl;
+
+    printf("%s\n", buffer);
   }
 
-  for(int i = 0; i < frequencies.size(); i++)
-    wait(0);
-
-  string data_string;
-  string data_binary;
-
-  for(int i = 0; i < frequencies.size(); i++) {
-    input_file.open(getFilename(frequencies[i].first));
-
-    getline(input_file, data_string);
-    getline(input_file, data_binary);
-
-    input_file.close();
-
-    if(i == 0)
-      cout << "Original Message: " << data_string << endl;
-    else
-      cout << "Remaining Message: " << data_string << endl;
-
-    if(frequencies[i].first == '\n')
-      cout << "Symbol <EOL> code: " << data_binary << endl;
-    else
-      cout << "Symbol " << frequencies[i].first << " code: " << data_binary << endl;
+  for(int i = 0; i < num_of_threads; i++) {
+    pthread_join(tid[i], NULL);
   }
-
+  
   return 0;
 }
 
@@ -86,11 +110,10 @@ bool checkStack(stack<char> stk, char c) {
   while(!stk.empty()) {
     if(stk.top() == c)
       return true;
+    else if(stk.empty())
+      return false;
     else
       stk.pop();
-
-    if(stk.empty())
-      return false;
   }
 }
 
@@ -162,42 +185,9 @@ void printFreq(vector<pair<char,int>> freq) {
   }
 }
 
-string binary(vector<char> txt, char c) {
-  string binary;
+void *connectToServer(void *ptr) {
+  
+  
 
-  for(int i = 0; i < txt.size(); i++) {
-    if(txt[i] == c)
-      binary += '1';
-    else
-      binary += '0';
-  }
-
-  return binary;
-}
-
-void outputString(ofstream& ofile, vector<char> txt, string fn, string binary) {
-  ofile.open(fn);
-
-  for(int i = 0; i < txt.size(); i++) {
-    if(txt[i] == '\n') {
-      ofile << "<EOL>";
-    } else {
-      ofile << txt[i];
-    }
-  } ofile << endl;
-
-  ofile << binary;
-
-  ofile.close();
-}
-
-string getFilename(char c) {
-  if(c == '\n') {
-    string s = "EOL.txt";
-    return s;
-  } else {
-    string s(1, c);
-    s += ".txt";
-    return s;
-  }
+  return NULL;
 }

@@ -1,1 +1,4 @@
-aaaannnaaakkllaaaaap
+ABCD
+BCDA
+CDAB
+DABC
