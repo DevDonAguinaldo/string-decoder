@@ -28,8 +28,10 @@ void fireman(int) {
 
 int main(int argc, char const *argv[]) {
   int sockfd, newsockfd, portno, clilen;
-  char buffer[256];
+  char message[256];
+  char character[2];
   struct sockaddr_in serv_addr, cli_addr;
+  struct data_struct data;
   int n;
 
   if (argc < 2) {
@@ -66,24 +68,43 @@ int main(int argc, char const *argv[]) {
     }
 
     if(fork() == 0) {
-      bzero(buffer, 256);
-
-      n = recv(newsockfd, buffer, 255, 0);
+      // Receive Message
+      bzero(message, 255);
+      n = recv(newsockfd, message, sizeof(message), 0);
 
       if (n < 0)
         cerr << "Error - Cannot read from socket." << endl;
 
-      /*BEGIN DECOMPRESSION*/
+      printf("%s\n", message);
 
-      printf("Received: %s\n", buffer);
+      // Receive Character
+      bzero(character, 2);
+      n = recv(newsockfd, character, sizeof(character), 0);
 
-      /*END DECOMPRESSION*/
+      if (n < 0)
+        cerr << "Error - Cannot read from socket." << endl;
 
+      printf("%s\n", character);
+
+      // BEGIN COMPRESSION
+      for(int i = 0; i < strlen(message); i++) {
+        if(message[i] == character[0]) {
+          message[i] = '1';
+        } else {
+          message[i] = '0';
+        }
+      }
+
+      printf("%s\n", message);
+
+      // END COMPRESSION
+
+      // Send Message Back
       n = send(newsockfd, "Received Message", 17, 0);
 
       if (n < 0)
         cerr << "Error - Cannot write to socket." << endl;
-      
+
       sleep(1);
       _exit(0);
     }

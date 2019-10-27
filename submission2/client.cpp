@@ -10,8 +10,6 @@
 #include <netdb.h> 
 #include <stack>
 #include <map>
-#include <vector>
-#include <algorithm>
 #include <thread>
 #include <pthread.h>
 #include <sys/wait.h>
@@ -19,10 +17,8 @@
 using namespace std;
 
 void *connection_handler(void *args);
-
-// !Segmentation Fault Error
-// !Coversion from string to char array
-// !Needs a way to pass string and char to server
+bool checkStack(stack<char>, char);
+void getCharacters(stack<char>&, string);
 
 struct data_struct {
   struct sockaddr_in serv_addr;
@@ -31,13 +27,13 @@ struct data_struct {
   int sockfd;
   int portno;
   char c;
-  char* msg;
+  string msg;
 };
 
 int main(int argc, char *argv[]) {
   int NTHREADS;
-  string input;
   struct data_struct data;
+  stack<char> characters;
 
   if (argc < 3) {
     fprintf(stderr, "usage %s hostname port\n", argv[0]);
@@ -47,21 +43,18 @@ int main(int argc, char *argv[]) {
   data.portno = atoi(argv[2]);
   data.server = gethostbyname(argv[1]);
   
-  // get string from input
-  getline(cin, input);
+  getline(cin, data.msg);
 
-  strcpy(data.msg, input.c_str());
-
-  printf("%s\n", data.msg);
+  // Find Frequencies
+  getCharacters(characters, data.msg);
 
   if (data.server == NULL) {
     cerr << "Error - IP/Port does not exist." << endl;
     exit(0);
   }
   
-  NTHREADS = 5;
+  NTHREADS = characters.size();
   pthread_t tid[NTHREADS];
-  char arr[NTHREADS] = {'a', 'b', 'c', 'd'};
 
   bzero((char *) &data.serv_addr, sizeof(data.serv_addr));
   data.serv_addr.sin_family = AF_INET;
@@ -69,17 +62,17 @@ int main(int argc, char *argv[]) {
   data.serv_addr.sin_port = htons(data.portno);
 
   for(int i = 0; i < NTHREADS; i++) {
-    data.c = arr[i];
+    data.c = characters.top();
     if(pthread_create(&tid[i], NULL, connection_handler, (void*) &data) > 0) {
       cerr << "Error - Creating thread." << endl;
       return 1;
     }
     sleep(1);
+    characters.pop();
   }
 
-  for(int i = 0; i < NTHREADS; i++) {
+  for(int i = 0; i < NTHREADS; i++)
     pthread_join(tid[i], NULL);
-  }
 
   return 0;
 }
@@ -97,23 +90,24 @@ void *connection_handler(void *args) {
   if (connect(data->sockfd, (struct sockaddr *) &data->serv_addr, sizeof(data->serv_addr)) < 0)
     cerr << "Error - Connecting to server." << endl;
 
-  // TODO: send data of msg and char to server
-  n = send(data->sockfd, data->msg, sizeof(data->msg), 0);
-
   bzero(buffer, 256);
-  buffer[0] = '-';
-  n = send(data->sockfd, buffer, 255, 0);
+  strcpy(buffer, data->msg.c_str());
 
+  n = send(data->sockfd, buffer, sizeof(buffer), 0);
+
+  if(n < 0) {
+    cerr << "Error - Sending message to server." << endl;
+  }
+  
   bzero(buffer, 256);
   buffer[0] = data->c;
-  n = send(data->sockfd, buffer, 255, 0);
+
+  n = send(data->sockfd, buffer, sizeof(buffer), 0);
 
   if(n < 0) {
     cerr << "Error - Sending message to server." << endl;
   }
 
-  // TODO: read msg from server and continue sending data
-  
   n = recv(data->sockfd, buffer, 20, 0);
 
   if(n < 0) {
@@ -125,4 +119,26 @@ void *connection_handler(void *args) {
   close(data->sockfd);
 
   return NULL;
+}
+
+bool checkStack(stack<char> stk, char c) {
+  while(!stk.empty()) {
+    if(stk.top() == c)
+      return true;
+    else
+      stk.pop();
+
+    if(stk.empty())
+      return false;
+  }
+}
+
+void getCharacters(stack<char> &stk, string msg) {
+  for(int i = 0; i < msg.length(); i++) {
+    if(checkStack(stk, msg[i]) == false) {
+      stk.push(msg[i]);
+    } else {
+      continue;
+    }
+  }
 }
