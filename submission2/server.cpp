@@ -1,28 +1,32 @@
 #include <iostream>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <netinet/in.h>
 #include <string.h>
-#include <string>
-#include <stdlib.h>
-#include <sys/types.h>
+#include <stdio.h>
+#include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h> 
-#include <stack>
-#include <map>
-#include <vector>
-#include <algorithm>
-#include <pthread.h>
 #include <sys/wait.h>
 
 using namespace std;
 
-int main(int argc, char const *argv[]) {
+struct data_struct {
+  struct sockaddr_in serv_addr;
+  struct hostent *server;
+  int tid;
+  int sockfd;
+  int portno;
+  char c;
+  string msg;
+};
 
+void fireman(int) {
+  while (waitpid(-1, NULL, WNOHANG) > 0)
+    std::cout << "A child process ended" << std::endl;
+}
+
+int main(int argc, char const *argv[]) {
   int sockfd, newsockfd, portno, clilen;
   char buffer[256];
   struct sockaddr_in serv_addr, cli_addr;
@@ -51,22 +55,41 @@ int main(int argc, char const *argv[]) {
   listen(sockfd, 5);
   
   clilen = sizeof(cli_addr);
+
+  signal(SIGCHLD, fireman);
   
-  while((newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t *) &clilen)) > 0) {
-    bzero(buffer, 256);
-    n = read(newsockfd, buffer, 255);
+  while(true) {
+    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t *) &clilen);
+  
+    if(newsockfd < 0) {
+      cerr << "Error - Could not accept socket." << endl;
+    }
 
-    if (n < 0)
-      cerr << "Error - Cannot read from socket." << endl;
+    if(fork() == 0) {
+      bzero(buffer, 256);
 
-    printf("Here is the message: %s\n", buffer);
-    n = write(newsockfd, "I got your message", 18);
+      n = recv(newsockfd, buffer, 255, 0);
 
-    if (n < 0)
-      cerr << "Error - Cannot write to socket." << endl;
+      if (n < 0)
+        cerr << "Error - Cannot read from socket." << endl;
 
-    if (newsockfd < 0) 
-      cerr << "Error - Cannot accept socket." << endl;
+      /*BEGIN DECOMPRESSION*/
+
+      printf("Received: %s\n", buffer);
+
+      /*END DECOMPRESSION*/
+
+      n = send(newsockfd, "Received Message", 17, 0);
+
+      if (n < 0)
+        cerr << "Error - Cannot write to socket." << endl;
+      
+      sleep(1);
+      _exit(0);
+    }
+
+    std::cout << "Press enter to continue" << std::endl;
+    std::cin.get();
   }
 
   return 0;

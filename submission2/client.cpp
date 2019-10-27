@@ -12,182 +12,117 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <thread>
 #include <pthread.h>
 #include <sys/wait.h>
 
 using namespace std;
 
-void getString(vector<char>&);
-void getChars(vector<char>, stack<char>&);
-int count(vector<char>, char);
-void getFreq(vector<pair<char,int>>&, vector<char>, stack<char>);
-bool checkStack(stack<char>, char);
-void sortFreq(vector<pair<char, int>>&);
-void printString(vector<char>);
-void printFreq(vector<pair<char,int>>);
-void outputString(ofstream&, vector<char>, string, string);
-void *connectToServer(void*);
+void *connection_handler(void *args);
 
-int main(int argc, char *argv[]) {
-  int sockfd, portno, n, num_of_threads;
+// !Segmentation Fault Error
+// !Coversion from string to char array
+// !Needs a way to pass string and char to server
 
+struct data_struct {
   struct sockaddr_in serv_addr;
   struct hostent *server;
+  int tid;
+  int sockfd;
+  int portno;
+  char c;
+  char* msg;
+};
 
-  char buffer[256];
+int main(int argc, char *argv[]) {
+  int NTHREADS;
+  string input;
+  struct data_struct data;
 
-  vector<char> input_txt;
-  stack<char> char_stack; 
-  vector<pair<char, int>> frequencies;
-  
   if (argc < 3) {
     fprintf(stderr, "usage %s hostname port\n", argv[0]);
     exit(0);
   }
 
-  getString(input_txt);
-  getChars(input_txt, char_stack);
-  getFreq(frequencies, input_txt, char_stack);
-  sortFreq(frequencies);
-  cout << "Sending these to server: \n";
-  printFreq(frequencies);
-
-  portno = atoi(argv[2]);
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  num_of_threads = frequencies.size();
-  pthread_t tid[num_of_threads];
-
-  if (sockfd < 0) 
-    cerr << "Error - Opening socket." << endl;
+  data.portno = atoi(argv[2]);
+  data.server = gethostbyname(argv[1]);
   
-  server = gethostbyname(argv[1]);
-  
-  if (server == NULL) {
+  // get string from input
+  getline(cin, input);
+
+  strcpy(data.msg, input.c_str());
+
+  printf("%s\n", data.msg);
+
+  if (data.server == NULL) {
     cerr << "Error - IP/Port does not exist." << endl;
     exit(0);
   }
-
-  bzero((char *) &serv_addr, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  bcopy((char *)server->h_addr, (char *) &serv_addr.sin_addr.s_addr, server->h_length);
-  serv_addr.sin_port = htons(portno);
   
-  // printf("Please enter the message: ");
+  NTHREADS = 5;
+  pthread_t tid[NTHREADS];
+  char arr[NTHREADS] = {'a', 'b', 'c', 'd'};
 
-  for(int i = 0; i < num_of_threads; i++) {
-    if(pthread_create(&tid[i], NULL, connectToServer, &frequencies[i].first)) {
+  bzero((char *) &data.serv_addr, sizeof(data.serv_addr));
+  data.serv_addr.sin_family = AF_INET;
+  bcopy((char *)data.server->h_addr, (char *) &data.serv_addr.sin_addr.s_addr, data.server->h_length);
+  data.serv_addr.sin_port = htons(data.portno);
+
+  for(int i = 0; i < NTHREADS; i++) {
+    data.c = arr[i];
+    if(pthread_create(&tid[i], NULL, connection_handler, (void*) &data) > 0) {
       cerr << "Error - Creating thread." << endl;
       return 1;
     }
-    
-    if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-      cerr << "Error - Connecting to server." << endl;
-
-    bzero(buffer, 256);
-    buffer[0] = frequencies[i].first;
-    n = write(sockfd, buffer, strlen(buffer));
-    
-    if (n < 0)
-      cerr << "Error - Writing to socket." << endl;
-    
-    bzero(buffer, 256);
-    n = read(sockfd, buffer, 255);
-    
-    if (n < 0)
-      cerr << "Error - Reading from socket." << endl;
-
-    printf("%s\n", buffer);
+    sleep(1);
   }
 
-  for(int i = 0; i < num_of_threads; i++) {
+  for(int i = 0; i < NTHREADS; i++) {
     pthread_join(tid[i], NULL);
   }
-  
+
   return 0;
 }
 
-bool checkStack(stack<char> stk, char c) {
-  while(!stk.empty()) {
-    if(stk.top() == c)
-      return true;
-    else if(stk.empty())
-      return false;
-    else
-      stk.pop();
-  }
-}
+void *connection_handler(void *args) {
+  struct data_struct *data = (struct data_struct *) args;
+  char buffer[256];
+  int n;
 
-void getString(vector<char>& txt) {
-  char c;
+  data->sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-  while(cin.get(c))
-    txt.push_back(c);
-}
+  if (data->sockfd < 0) 
+    cerr << "Error - Opening socket." << endl;
 
-void getChars(vector<char> txt, stack<char>& stk) {
-  for(int i = 0; i < txt.size(); i++) {
-    if(!checkStack(stk, txt[i]))
-      stk.push(txt[i]);
-    else
-      continue;
-  }
-}
+  if (connect(data->sockfd, (struct sockaddr *) &data->serv_addr, sizeof(data->serv_addr)) < 0)
+    cerr << "Error - Connecting to server." << endl;
 
-int count(vector<char> txt, char c) {
-  int counter = 0;
+  // TODO: send data of msg and char to server
+  n = send(data->sockfd, data->msg, sizeof(data->msg), 0);
 
-  for(int i = 0; i < txt.size(); i++) {
-    if(txt[i] == c)
-      counter++;
-    else if(c == '\n' && txt[i] == '<')
-      counter++;
+  bzero(buffer, 256);
+  buffer[0] = '-';
+  n = send(data->sockfd, buffer, 255, 0);
+
+  bzero(buffer, 256);
+  buffer[0] = data->c;
+  n = send(data->sockfd, buffer, 255, 0);
+
+  if(n < 0) {
+    cerr << "Error - Sending message to server." << endl;
   }
 
-  return counter;
-}
-
-void getFreq(vector<pair<char,int>>& freq, vector<char> txt, stack<char> stk) {
-  while(!stk.empty()) {
-    freq.push_back(pair<char,int> (stk.top(), count(txt, stk.top())));
-    stk.pop();
-  }
-}
-
-void sortFreq(vector<pair<char, int>>& freq) {
-  sort(freq.begin(), freq.end(), 
-    [](pair<char, int> elem1, pair<char, int> elem2) {
-        if(elem1.second == elem2.second) {
-          return elem1.first < elem2.first;
-        } else {
-          return elem1.second > elem2.second;
-        }
-    });
-}
-
-void printString(vector<char> txt) {
-  for(int i = 0; i < txt.size(); i++) {
-      if(txt[i] == '\n') {
-        cout << "<EOL>";
-      } else {
-        cout << txt[i];
-      }
-    } cout << endl;
-}
-
-void printFreq(vector<pair<char,int>> freq) {
-  for(int i = 0; i < freq.size(); i++) {
-    if(freq[i].first == '\n')
-      cout << "<EOL> frequency = " << freq[i].second << endl;
-    else if(freq[i].first == ' ')
-      cout << "frequency = " << freq[i].second << endl;
-    else 
-      cout << freq[i].first << " frequency = " << freq[i].second << endl;
-  }
-}
-
-void *connectToServer(void *ptr) {
+  // TODO: read msg from server and continue sending data
   
-  
+  n = recv(data->sockfd, buffer, 20, 0);
+
+  if(n < 0) {
+    cerr << "Error - Receiving data from server." << endl;
+  }
+
+  printf("%s\n", buffer);
+
+  close(data->sockfd);
 
   return NULL;
 }
