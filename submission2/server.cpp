@@ -26,10 +26,14 @@ void fireman(int) {
     std::cout << "A child process ended" << std::endl;
 }
 
+
 int main(int argc, char const *argv[]) {
   int sockfd, newsockfd, portno, clilen;
   char message[256];
+  char binary[256];
   char character[2];
+  char newMessage[256];
+  char charToAppend[2];
   struct sockaddr_in serv_addr, cli_addr;
   struct data_struct data;
   int n;
@@ -69,13 +73,13 @@ int main(int argc, char const *argv[]) {
 
     if(fork() == 0) {
       // Receive Message
-      bzero(message, 255);
+      bzero(message, 256);
       n = recv(newsockfd, message, sizeof(message), 0);
 
       if (n < 0)
         cerr << "Error - Cannot read from socket." << endl;
 
-      printf("%s\n", message);
+      // printf("Received Message: \t\t[%s]\n", message);
 
       // Receive Character
       bzero(character, 2);
@@ -84,33 +88,47 @@ int main(int argc, char const *argv[]) {
       if (n < 0)
         cerr << "Error - Cannot read from socket." << endl;
 
-      printf("%s\n", character);
+      // if(character[0] == '\n') {
+      //   printf("Removing Character: \t\t[<EOL>]\n");
+      // } else {
+      //   printf("Removing Character: \t\t[%s]\n", character);
+      // }
 
-      // BEGIN COMPRESSION
+      // *BEGIN
       for(int i = 0; i < strlen(message); i++) {
         if(message[i] == character[0]) {
-          message[i] = '1';
+          binary[i] = '1';
         } else {
-          message[i] = '0';
+          binary[i] = '0';
         }
       }
 
-      printf("%s\n", message);
-
-      // END COMPRESSION
-
-      // Send Message Back
-      n = send(newsockfd, "Received Message", 17, 0);
+      n = send(newsockfd, binary, sizeof(binary), 0);
 
       if (n < 0)
         cerr << "Error - Cannot write to socket." << endl;
 
+      for(int i = 0; i < strlen(message); i++) {
+        if(message[i] != character[0]) {
+          charToAppend[0] = message[i];
+          charToAppend[1] = '\0';
+          strcat(newMessage, charToAppend);
+        }
+      }
+
+      n = send(newsockfd, newMessage, sizeof(newMessage), 0);
+
+      if (n < 0)
+        cerr << "Error - Cannot write to socket." << endl;
+
+      // *END
+
+      // printf("Sending: [%s]\n", newMessage);
+      // printf("Sending: [%s]\n", binary);
+
       sleep(1);
       _exit(0);
     }
-
-    std::cout << "Press enter to continue" << std::endl;
-    std::cin.get();
   }
 
   return 0;
