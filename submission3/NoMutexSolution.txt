@@ -1,0 +1,47 @@
+  vector<pair<char, string>> input_vector;
+  string input;
+
+  while(getline(cin, input)) {
+    char c;
+    string binary;
+
+    // split input
+    if(input[0] == '<') {
+      c = '\n';
+      binary = input.substr(input.find(" ") + 1, input.length());
+    } else {
+      c = input[0];
+      binary = input.substr(2, input.length());
+    }
+    // store as key-value pairs in vector
+    input_vector.push_back(pair<char,string>(c, binary));
+  }
+
+  vector<pair<char, string>>::iterator itr;
+
+  string file_contents = "";
+
+  for(itr = input_vector.end() - 1; itr != input_vector.begin() - 1; --itr) {
+    if(itr->first == '\n') {
+      cout << "<EOL> Binary code = " << itr->second << endl;
+    } else {
+      cout << itr->first << " Binary code = " << itr->second << endl;
+    }
+
+    int j = 0;
+    string b = itr->second;
+    string placeholder;
+
+    for(int i = 0; i < b.length(); ++i) {
+      if(b[i] == '1') {
+        placeholder += itr->first;
+      } else if(b[i] == '0' && file_contents.length() != 0) {
+        placeholder += file_contents[j];
+        ++j;
+      } else continue;
+    }
+
+    file_contents = placeholder;
+  }
+
+  cout << "Decompressed file contents:\n" << file_contents << endl;
