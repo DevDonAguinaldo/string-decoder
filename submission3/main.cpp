@@ -7,15 +7,38 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/wait.h>
+#include <condition_variable>
 
 using namespace std;
 
 mutex m;
+condition_variable cv;
+string file_contents = "";
 
-void decompress(int i, string a, string b, char c) {
+void decompress(int id, string b, char c) {
   m.lock();
 
-  cout << "ID: " << i << endl;
+  if(c == '\n')
+    cout << "<EOL> Binary code = " << b << endl;
+  else if(c == ' ')
+    cout << "Binary code = " << b << endl;
+  else 
+    cout << c << " Binary code = " << b << endl;
+
+  int j = 0;
+  string placeholder = "";
+
+  for(int i = 0; i < b.length(); i++) {
+    if(b[i] == '1') {
+      placeholder += c;
+    } else if(b[i] == '0' && file_contents.length() != 0) {
+      placeholder += file_contents[j];
+      ++j;
+    } else continue;
+  }
+
+  file_contents = placeholder;
 
   m.unlock();
 }
@@ -43,15 +66,15 @@ int main(int argc, char const *argv[]) {
   int NTHREADS = input_vector.size();
   thread tid[NTHREADS];
 
-  string file_contents = "";
-
-  for(int i = NTHREADS - 1; i >= 0; --i) {
-    tid[i] = thread(decompress, i, file_contents, input_vector[i].second, input_vector[i].first);
+  for(int i = 0; i < NTHREADS; ++i) {
+    tid[i] = thread(decompress, i, input_vector[i].second, input_vector[i].first);
   }
 
-  for(int i = NTHREADS - 1; i >= 0; --i) {
+  for(int i = 0; i < NTHREADS; ++i) {
     tid[i].join();
   }
+
+  cout << "Decompressed file contents:\n" << file_contents << endl;
 
   return 0;
 }
