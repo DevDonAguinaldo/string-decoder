@@ -15,9 +15,12 @@ using namespace std;
 mutex m;
 condition_variable cv;
 string file_contents = "";
+static int neededID;
 
 void decompress(int id, string b, char c) {
-  m.lock();
+  unique_lock<mutex> ul(m);
+  
+  while(id != neededID) { cv.wait(ul); }
 
   if(c == '\n')
     cout << "<EOL> Binary code = " << b << endl;
@@ -40,7 +43,9 @@ void decompress(int id, string b, char c) {
 
   file_contents = placeholder;
 
-  m.unlock();
+  neededID--;
+
+  cv.notify_all();
 }
 
 int main(int argc, char const *argv[]) {
@@ -65,12 +70,13 @@ int main(int argc, char const *argv[]) {
 
   int NTHREADS = input_vector.size();
   thread tid[NTHREADS];
+  neededID = NTHREADS - 1;
 
-  for(int i = 0; i < NTHREADS; ++i) {
+  for(int i = NTHREADS - 1; i > -1; --i) {
     tid[i] = thread(decompress, i, input_vector[i].second, input_vector[i].first);
   }
 
-  for(int i = 0; i < NTHREADS; ++i) {
+  for(int i = NTHREADS - 1; i > -1; --i) {
     tid[i].join();
   }
 
